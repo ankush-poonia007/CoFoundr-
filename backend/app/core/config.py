@@ -6,7 +6,7 @@
 # DO NOT: Hardcode any config values directly in code.
 # DO NOT: Import this from models or DB files to prevent circular imports.
 
-from typing import List
+from typing import List, Any
 from pydantic import field_validator
 from pydantic_settings import BaseSettings
 
@@ -41,7 +41,7 @@ class Settings(BaseSettings):
     JWT_EXPIRE_MINUTES: int = 1440
 
     # ─── CORS ─────────────────────────────────────────────────────────────────
-    ALLOWED_ORIGINS: List[str] = ["http://localhost:3000"]
+    ALLOWED_ORIGINS: Any = ["http://localhost:3000"]
 
     # ─── File Upload ──────────────────────────────────────────────────────────
     MAX_FILE_SIZE_MB: int = 10
