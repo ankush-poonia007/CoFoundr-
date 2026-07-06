@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+htmlcov/
+
+# Node
+node_modules/
+.next/
+.env.local
+
+# Docker
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# DB
+*.sqlite3
