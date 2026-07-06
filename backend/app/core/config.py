@@ -62,5 +62,8 @@ class Settings(BaseSettings):
         extra = "ignore"
 
 
-# ─── Singleton instance ───────────────────────────────────────────────────────
-settings = Settings()
+# Validate settings are loaded correctly on import
+try:
+    settings = Settings()
+except Exception as e:
+    raise RuntimeError(f"❌ CoFoundr startup failed — missing env variable: {e}")

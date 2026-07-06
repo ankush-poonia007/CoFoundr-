@@ -25,6 +25,11 @@ build/
 # Secret Files
 .env
 .env.local
+.env.production
+.env.development
+backend/.env
+frontend/.env.local
+*.env
 .env.development.local
 .env.test.local
 .env.production.local

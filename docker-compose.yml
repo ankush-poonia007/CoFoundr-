@@ -46,7 +46,9 @@ services:
         condition: service_healthy
       chromadb:
         condition: service_started
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    command: >
+      sh -c "python scripts/check_env.py &&
+             uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
 
   frontend:
     build:
