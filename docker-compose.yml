@@ -2,7 +2,6 @@
 # Purpose: Orchestrates all services for local development
 # Services: backend, frontend, postgres, chromadb
 
-version: "3.9"
 
 services:
 
@@ -54,13 +53,10 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: cofoundr_frontend
-    env_file:
-      - ./frontend/.env.local
     ports:
       - "3000:3000"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+    env_file:
+      - ./frontend/.env.local
     depends_on:
       - backend
 
