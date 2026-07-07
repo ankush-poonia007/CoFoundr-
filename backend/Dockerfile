@@ -1,6 +1,7 @@
+# backend/Dockerfile
 # Multi-stage Python build for minimal image size and secure execution
 
-# Stage 1: Build compilation dependencies
+# ─── Stage 1: Build ───────────────────────────────────────────────
 FROM python:3.11-slim AS builder
 
 WORKDIR /app
@@ -10,10 +11,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# Copy requirements FIRST — Docker caches this layer
+# Only reinstalls packages if requirements.txt changes
 COPY requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
 
-# Stage 2: Final runner runtime image
+# ─── Stage 2: Runner ──────────────────────────────────────────────
 FROM python:3.11-slim AS runner
 
 WORKDIR /app
@@ -24,9 +27,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copy installed packages from builder
 COPY --from=builder /root/.local /root/.local
+
+# Copy application code
 COPY . .
 
-# Wire PATH to access installed uvicorn / alembic run utilities
 ENV PATH=/root/.local/bin:$PATH
 ENV PYTHONUNBUFFERED=1
 

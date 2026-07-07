@@ -1,18 +1,27 @@
-# Multi-stage image build for frontend Next.js server
+# frontend/Dockerfile
+# Multi-stage Next.js build for minimal production image
 
+# ─── Stage 1: Install dependencies ───────────────────────────────
+FROM node:18-alpine AS deps
+
+WORKDIR /app
+
+# Copy package files FIRST — Docker caches this layer
+# Only reruns npm install if package.json or lockfile changes
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# ─── Stage 2: Build ───────────────────────────────────────────────
 FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-COPY package.json ./
-RUN npm install
-
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Compile TypeScript and build Next.js application bundles
 RUN npm run build
 
-# Stage 2: Runtime image setup
+# ─── Stage 3: Runner ──────────────────────────────────────────────
 FROM node:18-alpine AS runner
 
 WORKDIR /app
@@ -20,7 +29,6 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Copy node modules and build outputs
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
