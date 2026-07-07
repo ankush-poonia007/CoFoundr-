@@ -22,6 +22,10 @@ class User(Base, UUIDMixin, TimestampMixin):
     avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     auth_provider: Mapped[AuthProvider] = mapped_column(nullable=False)
     provider_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    mobile_number: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    google_connected: Mapped[bool] = mapped_column(Boolean, default=False)
+    github_connected: Mapped[bool] = mapped_column(Boolean, default=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     # ─── Relationships ────────────────────────────────────────────────────────

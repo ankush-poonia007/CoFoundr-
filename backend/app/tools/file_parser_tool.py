@@ -28,7 +28,22 @@ def parse_file(file_content: bytes, filename: str) -> str:
     Returns:
         str: Raw text extracted.
     """
-    ext = filename.lower()
+    # 1. Sanitize filename to prevent traversal or shell escapes
+    import os
+    basename = os.path.basename(filename)
+    sanitized_name = "".join(c for c in basename if c.isalnum() or c in (".", "-", "_"))
+    if not sanitized_name:
+        sanitized_name = "document.txt"
+
+    # 2. Validate file size matches configured limits
+    from app.core.config import settings
+    max_size_bytes = settings.MAX_FILE_SIZE_MB * 1024 * 1024
+    if len(file_content) > max_size_bytes:
+        raise FileParsingException(
+            f"File size exceeds configured limit of {settings.MAX_FILE_SIZE_MB}MB."
+        )
+
+    ext = sanitized_name.lower()
     try:
         if ext.endswith(".pdf"):
             return _parse_pdf(file_content)

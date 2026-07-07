@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     APP_NAME: str = "CoFoundr"
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = False
+    BACKEND_URL: str = "http://localhost:8000"
+    FRONTEND_URL: str = "http://localhost:3000"
 
     # ─── Database ─────────────────────────────────────────────────────────────
     DATABASE_URL: str

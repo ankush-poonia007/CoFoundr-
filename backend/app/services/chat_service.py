@@ -13,9 +13,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status
 
 from app.agents.graph import agent_graph
-from app.models.enums import MessageRole
+from app.models.enums import MessageRole, ReportType
 from app.repositories.chat_repository import ChatRepository
 from app.repositories.startup_repository import StartupRepository
+from app.repositories.report_repository import ReportRepository
 from app.schemas.chat import (
     ChatSessionCreate,
     ChatSessionResponse,
@@ -104,13 +105,39 @@ class ChatService:
         if not any(m["content"] == payload.content for m in state_messages):
             state_messages.append({"role": "user", "content": payload.content})
 
-        # 4. Construct LangGraph AgentState
+        # 4. Construct LangGraph AgentState with startup profile context
+        startup_data = None
+        if session.startup_id:
+            startup = await self.startup_repo.get(session.startup_id)
+            if startup:
+                startup_data = {
+                    "id": str(startup.id),
+                    "name": startup.name,
+                    "tagline": startup.tagline,
+                    "problem_statement": startup.problem_statement,
+                    "solution_description": startup.solution_description,
+                    "target_market": startup.target_market,
+                    "unique_value_proposition": startup.unique_value_proposition,
+                    "founder_name": startup.founder_name,
+                    "team_size": startup.team_size,
+                    "domain_expertise": startup.domain_expertise,
+                    "stage": startup.stage.value if hasattr(startup.stage, "value") else startup.stage,
+                    "business_model": startup.business_model,
+                    "revenue_model": startup.revenue_model,
+                    "has_revenue": startup.has_revenue,
+                    "competitors_known": startup.competitors_known,
+                    "competitive_advantage": startup.competitive_advantage,
+                    "health_score": startup.health_score,
+                }
+
         initial_state = {
             "messages": state_messages,
             "startup_id": str(session.startup_id) if session.startup_id else None,
             "next_agent": None,
             "response": None,
-            "metadata": {}
+            "metadata": {
+                "startup_data": startup_data
+            }
         }
 
         try:
@@ -135,6 +162,23 @@ class ChatService:
                 tokens_used=tokens,
                 metadata_json=result.get("metadata")
             )
+
+            # Auto-save report if health_score was computed in metadata by recommendation agent
+            health_score = result.get("metadata", {}).get("health_score")
+            if session.startup_id and health_score is not None:
+                # Update startup's health_score field permanently
+                startup = await self.startup_repo.get(session.startup_id)
+                if startup:
+                    await self.startup_repo.update(startup, {"health_score": health_score})
+
+                report_repo = ReportRepository(self.db)
+                await report_repo.create({
+                    "startup_id": session.startup_id,
+                    "report_type": ReportType.INVESTOR_READINESS,
+                    "content": agent_response,
+                    "score": health_score,
+                    "metadata_json": result.get("metadata")
+                })
 
             # Ensure session is committed
             await self.db.commit()

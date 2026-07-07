@@ -26,13 +26,13 @@ api.interceptors.request.use(
 // ─── API Methods ─────────────────────────────────────────────────────────────
 
 export const authAPI = {
-  getGoogleRedirect: async () => {
-    const res = await api.get('/auth/google');
-    return res.data; // e.g. { url: "..." }
+  getGoogleRedirect: async (state?: string) => {
+    const res = await api.get(`/auth/google${state ? `?state=${state}` : ''}`);
+    return res.data.data; // e.g. { url: "..." }
   },
-  getGitHubRedirect: async () => {
-    const res = await api.get('/auth/github');
-    return res.data;
+  getGitHubRedirect: async (state?: string) => {
+    const res = await api.get(`/auth/github${state ? `?state=${state}` : ''}`);
+    return res.data.data;
   },
   handleGoogleCallback: async (code: string) => {
     const res = await api.get(`/auth/google/callback?code=${code}`);
@@ -44,6 +44,26 @@ export const authAPI = {
   },
   logout: async () => {
     await api.post('/auth/logout');
+  },
+  updateProfile: async (name: string, mobileNumber?: string | null) => {
+    const res = await api.put('/auth/profile', { name, mobile_number: mobileNumber });
+    return res.data.data;
+  },
+  emailRegister: async (data: any) => {
+    const res = await api.post('/auth/register', data);
+    return res.data.data;
+  },
+  emailLogin: async (data: any) => {
+    const res = await api.post('/auth/login', data);
+    return res.data.data;
+  },
+  updatePassword: async (data: any) => {
+    const res = await api.put('/auth/password', data);
+    return res.data.data;
+  },
+  getMe: async () => {
+    const res = await api.get('/auth/me');
+    return res.data.data;
   }
 };
 

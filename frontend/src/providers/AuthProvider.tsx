@@ -13,23 +13,29 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     const initAuth = async () => {
-      const storedToken = localStorage.getItem('token');
+      let storedToken = localStorage.getItem('token');
+
+      // Parse query token from OAuth redirect callback if present
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const queryToken = params.get('token');
+        if (queryToken) {
+          localStorage.setItem('token', queryToken);
+          storedToken = queryToken;
+
+          // Clear query params to clean browser address bar
+          const cleanUrl = window.location.pathname;
+          window.history.replaceState({}, '', cleanUrl);
+        }
+      }
+
       if (storedToken) {
         try {
-          // Verify JWT token signature by requesting authenticated dashboard data
-          const res = await api.get('/dashboard', {
+          const res = await api.get('/auth/me', {
             headers: { Authorization: `Bearer ${storedToken}` }
           });
-          if (res.status === 200) {
-            // Deconstruct session parameters
-            setAuth(
-              {
-                id: 'active_session_user_id',
-                email: 'builder@cofoundr.ai',
-                name: 'CoFoundr Founder'
-              },
-              storedToken
-            );
+          if (res.data.success && res.data.data) {
+            setAuth(res.data.data, storedToken);
           } else {
             clearAuth();
           }
@@ -45,12 +51,12 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     // Enforce private route shields for dashboard, chat, and onboarding panels
-    const publicPaths = ['/', '/auth/google/callback', '/auth/github/callback'];
+    const publicPaths = ['/', '/login', '/signup', '/docs', '/contact', '/auth/google/callback', '/auth/github/callback'];
     if (!loading) {
       const isPublic = publicPaths.includes(pathname) || pathname?.startsWith('/auth/');
       if (!token && !isPublic) {
-        router.push('/');
-      } else if (token && pathname === '/') {
+        router.push('/login');
+      } else if (token && (pathname === '/' || pathname === '/login' || pathname === '/signup')) {
         router.push('/dashboard');
       }
     }

@@ -65,19 +65,21 @@ class MainAgent:
             if intent not in ["web_search", "rag", "recommendation", "end"]:
                 intent = "end"
 
-            # Direct response if classified as 'end'
-            direct_reply = None
-            if intent == "end":
-                direct_reply = response.content # Or we can let it go to END for default reply
-
             state["next_agent"] = intent
-            if direct_reply and not state.get("response"):
-                # If direct chat and no response, we can write a simple reply or let the service run
-                pass
+            if intent == "end":
+                state["response"] = response.content
 
         except Exception as e:
             logger.error(f"MainAgent: Classification failed: {e}. Defaulting route to 'end'.")
             state["next_agent"] = "end"
+            if 'response' in locals() and hasattr(response, 'content'):
+                state["response"] = response.content
+            else:
+                state["response"] = (
+                    "### Advisor Response (Sandbox Mode)\n\n"
+                    "I classified your request as general inquiry. "
+                    "How else can I assist with your startup today?"
+                )
 
         return state
 

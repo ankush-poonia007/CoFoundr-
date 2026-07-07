@@ -13,7 +13,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1 import auth, chat, dashboard, onboarding, reports, startup
+from app.api.v1 import auth, chat, dashboard, onboarding, reports, startup, support
 from app.core.config import settings
 from app.core.logging import setup_logging
 from app.db.init_db import init_db
@@ -71,6 +71,7 @@ app.include_router(startup.router, prefix=API_PREFIX, tags=["Startup"])
 app.include_router(chat.router, prefix=API_PREFIX, tags=["Chat"])
 app.include_router(dashboard.router, prefix=API_PREFIX, tags=["Dashboard"])
 app.include_router(reports.router, prefix=API_PREFIX, tags=["Reports"])
+app.include_router(support.router, prefix=API_PREFIX, tags=["Support"])
 
 
 # ─── Health Check ──────────────────────────────────────────────────────────────

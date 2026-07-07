@@ -25,14 +25,17 @@ class AuthService:
     """Authentication and session management handler."""
 
     def __init__(self, db: AsyncSession):
+        self.db = db
         self.user_repo = UserRepository(db)
 
     @staticmethod
-    def get_google_auth_url() -> dict:
+    def get_google_auth_url(state: str | None = None) -> dict:
         """Build the redirect URL for Google OAuth consent screen."""
         if settings.GOOGLE_CLIENT_ID == "your_google_client_id":
             # Return mock redirect payload for sandbox testing
             mock_url = f"{settings.BACKEND_URL}/api/v1/auth/google/callback?code=mock_google_code"
+            if state:
+                mock_url += f"&state={state}"
             logger.info("Google OAuth configured with placeholder secrets. Returning mock URL.")
             return {"url": mock_url}
 
@@ -44,15 +47,19 @@ class AuthService:
             "access_type": "offline",
             "prompt": "consent",
         }
+        if state:
+            params["state"] = state
         query = "&".join(f"{k}={v}" for k, v in params.items())
         return {"url": f"https://accounts.google.com/o/oauth2/v2/auth?{query}"}
 
     @staticmethod
-    def get_github_auth_url() -> dict:
+    def get_github_auth_url(state: str | None = None) -> dict:
         """Build the redirect URL for GitHub OAuth consent screen."""
         if settings.GITHUB_CLIENT_ID == "your_github_client_id":
             # Return mock redirect payload for sandbox testing
             mock_url = f"{settings.BACKEND_URL}/api/v1/auth/github/callback?code=mock_github_code"
+            if state:
+                mock_url += f"&state={state}"
             logger.info("GitHub OAuth configured with placeholder secrets. Returning mock URL.")
             return {"url": mock_url}
 
@@ -61,10 +68,12 @@ class AuthService:
             "redirect_uri": f"{settings.BACKEND_URL}/api/v1/auth/github/callback",
             "scope": "user:email",
         }
+        if state:
+            params["state"] = state
         query = "&".join(f"{k}={v}" for k, v in params.items())
         return {"url": f"https://github.com/login/oauth/authorize?{query}"}
 
-    async def handle_google_callback(self, code: str) -> TokenResponse:
+    async def handle_google_callback(self, code: str, state: str | None = None) -> TokenResponse:
         """Exchange Google authorization code for token and authenticate user."""
         logger.info("Exchanging code for Google OAuth session.")
 
@@ -113,6 +122,24 @@ class AuthService:
                     )
                 user_info = profile_res.json()
 
+        # If state starts with "link:", we are connecting Google to an existing logged-in account
+        if state and state.startswith("link:"):
+            token = state.split("link:")[1]
+            from app.core.security import decode_access_token
+            import uuid
+            payload = decode_access_token(token)
+            if payload and "sub" in payload:
+                user_id = uuid.UUID(payload["sub"])
+                user = await self.user_repo.get(user_id)
+                if user:
+                    user.google_connected = True
+                    await self.db.commit()
+                    return TokenResponse(
+                        access_token=token,
+                        user_id=user.id,
+                        email=user.email
+                    )
+
         # Provision user
         user = await self._provision_user(
             email=user_info["email"],
@@ -130,7 +157,7 @@ class AuthService:
             email=user.email
         )
 
-    async def handle_github_callback(self, code: str) -> TokenResponse:
+    async def handle_github_callback(self, code: str, state: str | None = None) -> TokenResponse:
         """Exchange GitHub authorization code for token and authenticate user."""
         logger.info("Exchanging code for GitHub OAuth session.")
 
@@ -214,6 +241,24 @@ class AuthService:
                     "id": str(user_data.get("id")),
                 }
 
+        # If state starts with "link:", we are connecting GitHub to an existing logged-in account
+        if state and state.startswith("link:"):
+            token = state.split("link:")[1]
+            from app.core.security import decode_access_token
+            import uuid
+            payload = decode_access_token(token)
+            if payload and "sub" in payload:
+                user_id = uuid.UUID(payload["sub"])
+                user = await self.user_repo.get(user_id)
+                if user:
+                    user.github_connected = True
+                    await self.db.commit()
+                    return TokenResponse(
+                        access_token=token,
+                        user_id=user.id,
+                        email=user.email
+                    )
+
         # Provision user
         user = await self._provision_user(
             email=user_info["email"],
@@ -262,4 +307,13 @@ class AuthService:
                     "provider_id": provider_id,
                     "is_active": True,
                 })
+        
+        # Set flags based on OAuth provider connection type
+        provider_str = auth_provider.value if hasattr(auth_provider, "value") else str(auth_provider)
+        if provider_str == "google":
+            user.google_connected = True
+        elif provider_str == "github":
+            user.github_connected = True
+            
+        await self.db.commit()
         return user

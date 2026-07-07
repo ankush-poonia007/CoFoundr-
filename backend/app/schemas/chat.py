@@ -19,8 +19,9 @@ class ChatMessageBase(BaseModel):
     content: str
 
 
-class ChatMessageCreate(ChatMessageBase):
+class ChatMessageCreate(BaseModel):
     """Model for creating/sending a message."""
+    content: str = Field(..., min_length=1, max_length=5000)
     metadata_json: Dict[str, Any] | None = Field(None)
 
 

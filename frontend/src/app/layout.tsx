@@ -1,5 +1,6 @@
 import React from 'react';
 import AuthProvider from '../providers/AuthProvider';
+import { ThemeProvider } from '../providers/ThemeProvider';
 import './globals.css';
 
 export const metadata = {
@@ -13,11 +14,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className="bg-slate-950 text-slate-100 antialiased selection:bg-indigo-500/30">
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+    <html lang="en">
+      <body className="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 antialiased selection:bg-indigo-500/30 transition-colors duration-350">
+        <ThemeProvider>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -31,6 +31,7 @@ class ReportType(str, enum.Enum):
 class AuthProvider(str, enum.Enum):
     GOOGLE = "google"
     GITHUB = "github"
+    EMAIL = "email"
 
 
 class MessageRole(str, enum.Enum):

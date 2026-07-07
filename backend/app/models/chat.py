@@ -7,7 +7,7 @@
 # DO NOT: Place state machine or agent transition logic here.
 
 import uuid
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from sqlalchemy import String, ForeignKey, Text, Integer, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base, UUIDMixin, TimestampMixin
@@ -25,7 +25,7 @@ class ChatSession(Base, UUIDMixin, TimestampMixin):
 
     # ─── Relationships ────────────────────────────────────────────────────────
     user: Mapped["User"] = relationship("User", back_populates="chat_sessions")
-    startup: Mapped["Startup" | None] = relationship("Startup", back_populates="chat_sessions")
+    startup: Mapped[Optional["Startup"]] = relationship("Startup", back_populates="chat_sessions")
     messages: Mapped[List["ChatMessage"]] = relationship("ChatMessage", back_populates="chat_session", cascade="all, delete-orphan")
 
 

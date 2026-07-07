@@ -46,7 +46,10 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
         history = self.request_history[client_ip]
         self.request_history[client_ip] = [t for t in history if now - t < self.window_seconds]
 
-        if len(self.request_history[client_ip]) >= self.limit:
+        # Select rate limit dynamically (Chat endpoint limited to 20/min, others default to general limit)
+        current_limit = 20 if "/api/v1/chat" in path else self.limit
+
+        if len(self.request_history[client_ip]) >= current_limit:
             logger.warning(f"Rate limit exceeded for client IP: {client_ip} on path {path}")
             return JSONResponse(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,

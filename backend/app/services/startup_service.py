@@ -73,7 +73,11 @@ class StartupService:
             payload.model_dump(exclude_unset=True)
         )
         await self.db.commit()
-        return StartupResponse.model_validate(updated)
+        try:
+            return StartupResponse.model_validate(updated)
+        except Exception as e:
+            logger.error(f"StartupResponse validation failed: {str(e)}")
+            raise e
 
     async def analyze_startup(self, startup_id: uuid.UUID, user_id: uuid.UUID) -> dict:
         """

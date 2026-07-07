@@ -5,6 +5,11 @@ export interface User {
   email: string;
   name: string;
   avatar_url?: string | null;
+  auth_provider?: string;
+  has_password?: boolean;
+  mobile_number?: string | null;
+  google_connected?: boolean;
+  github_connected?: boolean;
 }
 
 interface AuthState {

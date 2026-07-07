@@ -8,13 +8,19 @@
 
 import logging
 import uuid
-from fastapi import Request, HTTPException, status
+from fastapi import Request, HTTPException, status, Depends
+from fastapi.security import HTTPBearer
 from app.core.exceptions import UnauthorizedException
 
 logger = logging.getLogger(__name__)
 
+reusable_oauth2 = HTTPBearer(auto_error=False)
 
-async def get_current_user_id(request: Request) -> uuid.UUID:
+
+async def get_current_user_id(
+    request: Request,
+    token: str | None = Depends(reusable_oauth2)
+) -> uuid.UUID:
     """
     Dependency to retrieve the authenticated user ID from the request state.
     Raises HTTPException 401 if missing or invalid.

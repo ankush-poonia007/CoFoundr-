@@ -22,4 +22,22 @@ async def init_db() -> None:
     logger.info("Initializing database tables...")
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+    # Autocommit safety patchers for existing databases
+    async with engine.connect() as conn:
+        await conn.execution_options(isolation_level="AUTOCOMMIT")
+        try:
+            from sqlalchemy import text
+            await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255)"))
+            await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS mobile_number VARCHAR(50)"))
+            await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS google_connected BOOLEAN DEFAULT FALSE"))
+            await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS github_connected BOOLEAN DEFAULT FALSE"))
+        except Exception as e:
+            logger.warning(f"Failed to check password_hash/mobile_number/oauth columns: {e}")
+
+        try:
+            await conn.execute(text("ALTER TYPE authprovider ADD VALUE 'email'"))
+        except Exception:
+            pass # Already exists
+
     logger.info("Database tables initialized successfully.")

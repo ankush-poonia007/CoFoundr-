@@ -21,9 +21,14 @@ class AuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next) -> Response:
         request.state.user = None
         auth_header = request.headers.get("Authorization")
+        token = None
 
         if auth_header and auth_header.startswith("Bearer "):
             token = auth_header.split(" ")[1]
+        else:
+            token = request.query_params.get("token")
+
+        if token:
             payload = decode_access_token(token)
             if payload:
                 # Store decoded token payload (e.g. {"sub": user_id, "email": ...})

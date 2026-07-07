@@ -7,8 +7,8 @@
 # DO NOT: Define mutable objects here.
 
 # ─── AI Models ────────────────────────────────────────────────────────────────
-GEMINI_FLASH_MODEL = "gemini-1.5-flash"
-GEMINI_EMBEDDING_MODEL = "models/embedding-001"
+GEMINI_FLASH_MODEL = "gemini-2.5-flash"
+GEMINI_EMBEDDING_MODEL = "models/text-embedding-004"
 GROQ_MODEL = "llama3-70b-8192"
 
 # ─── Agent Names ──────────────────────────────────────────────────────────────

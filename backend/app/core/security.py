@@ -7,26 +7,29 @@
 # DO NOT: Use weak encryption algorithms (always use JWT_ALGORITHM from settings).
 
 import logging
+import bcrypt
 from datetime import datetime, timedelta, timezone
 from typing import Dict, Any
 from jose import jwt, JWTError
-from passlib.context import CryptContext
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-# Password hashing context (defaulting to bcrypt)
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a plain password against its hash."""
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
+    except Exception:
+        return False
 
 
 def get_password_hash(password: str) -> str:
     """Generate a bcrypt hash of the password."""
-    return pwd_context.hash(password)
+    # Truncate password to 72 bytes (standard bcrypt limits) to avoid overflow ValueError
+    pwd_bytes = password.encode("utf-8")[:72]
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(pwd_bytes, salt).decode("utf-8")
 
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
