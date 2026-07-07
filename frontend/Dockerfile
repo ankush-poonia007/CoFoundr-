@@ -8,8 +8,8 @@ WORKDIR /app
 
 # Copy package files FIRST — Docker caches this layer
 # Only reruns npm install if package.json or lockfile changes
-COPY package.json package-lock.json ./
-RUN npm ci
+COPY package.json ./
+RUN npm install
 
 # ─── Stage 2: Build ───────────────────────────────────────────────
 FROM node:18-alpine AS builder

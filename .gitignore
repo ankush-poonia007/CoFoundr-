@@ -55,3 +55,6 @@ chroma_data/               # Local ChromaDB Docker volume storage folder
 .DS_Store                  # macOS Finder folder custom options files
 Thumbs.db                  # Windows Explorer folder thumbnail caches
 ehthumbs.db                # Windows Media Center thumbnail caches
+backend/.env
+.env
+frontend/.env.local
